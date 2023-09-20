@@ -46,7 +46,44 @@ func (l List[K, V]) Find(key K) (V, bool) {
 
 // returns true if inserted, else false (already there)
 func (l List[K, V]) Insert(key K, val V) bool {
+	// infinite loop
+	for {
+		// traverse without locking
+		pred := l.head
+		curr := pred.next.Load()
 
+		for curr.key < key {
+			pred = curr
+			curr = curr.next.Load()
+		}
+
+		// lock when found
+		pred.Lock()
+		curr.Lock()
+
+		// verify nodes are correct
+		// if not, release locks and start over
+		if !l.Validate(pred, curr) {
+			curr.Unlock()
+			pred.Unlock()
+			continue
+		}
+
+		result := false
+
+		if key != curr.key {
+			newNode := new(node[K, V])
+			newNode.key = key
+			newNode.item = val
+			newNode.next.Store(curr)
+			pred.next.Store(newNode)
+			result = true
+		}
+
+		curr.Unlock()
+		pred.Unlock()
+		return result
+	}
 }
 
 // pred comes before curr and curr matches
