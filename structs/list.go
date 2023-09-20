@@ -19,7 +19,7 @@ type List[K cmp.Ordered, V any] struct {
 }
 
 // type ConcurrentList[K cmp.Ordered, V any] interface {
-// 	Find(K, V, bool)    // does not remove node, else same as remove
+// 	Find(K, V, bool)
 // 	Insert(K, V) bool   // returns true if inserted, else false (already there)
 // 	Remove(K) (V, bool) // returns val, ok (false if no node with key)
 // }
@@ -33,4 +33,13 @@ func New[K cmp.Ordered, V any](minKey K, maxKey K) List[K, V] {
 
 	list := List[K, V]{head: head}
 	return list
+}
+
+// does not remove node, else same as remove
+func (l List[K, V]) Find(key K) (V, bool) {
+	curr := l.head // no load??
+	for curr.key < key {
+		curr = curr.next.Load()
+	}
+	return curr.item, curr.key == key
 }
