@@ -19,7 +19,15 @@ func main() {
 	if ok {
 		fmt.Println("found", find)
 	} else {
-		fmt.Println("could not find ")
+		fmt.Println("could not find", find)
+	}
+
+	remove := 4
+	val, ok := lst.Remove(remove)
+	if ok {
+		fmt.Println("removed", val)
+	} else {
+		fmt.Println("could not remove", remove)
 	}
 
 }

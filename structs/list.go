@@ -94,23 +94,21 @@ func (l List[K, V]) Remove(key K) (V, bool) {
 		pred.Lock()
 		curr.Lock()
 
-		if !l.Validate(pred, curr) { // failed
+		if l.Validate(pred, curr) { // failed
+			if curr.key == key {
+				curr.marked.Store(true)
+				next := curr.next.Load()
+				pred.next.Store(next)
+				return curr.item, true
+			}
+
 			curr.Unlock()
 			pred.Unlock()
-			continue
+		} else {
+			curr.Unlock()
+			pred.Unlock()
+			return l.head.item, false
 		}
-
-		result := false
-		if curr.key == key {
-			curr.marked.Store(true)
-			next := curr.next.Load()
-			pred.next.Store(next)
-		}
-
-		curr.Unlock()
-		pred.Unlock()
-
-		return curr.item, result
 	}
 }
 
