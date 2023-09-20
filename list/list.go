@@ -1,7 +1,11 @@
 package list
 
-import "cmp"
+import (
+	"cmp"
+
+	"github.com/anyaguuu/concurrent_lists/node"
+)
 
 type List[K cmp.Ordered, V any] struct {
-	head *node.node[K, V]
+	head *node.Node[K, V]
 }
