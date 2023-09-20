@@ -8,14 +8,14 @@ import (
 
 type node[K cmp.Ordered, V any] struct {
 	sync.Mutex
-	key    K
+	Key    K
 	item   V
 	marked atomic.Bool // zero value is false
-	next   atomic.Pointer[node[K, V]]
+	Next   atomic.Pointer[node[K, V]]
 }
 
 type List[K cmp.Ordered, V any] struct {
-	head *node[K, V]
+	Head *node[K, V]
 }
 
 // type ConcurrentList[K cmp.Ordered, V any] interface {
@@ -26,22 +26,22 @@ type List[K cmp.Ordered, V any] struct {
 
 func New[K cmp.Ordered, V any](minKey K, maxKey K) List[K, V] {
 	tail := new(node[K, V])
-	tail.key = maxKey
+	tail.Key = maxKey
 	head := new(node[K, V])
-	head.key = minKey
-	head.next.Store(tail)
+	head.Key = minKey
+	head.Next.Store(tail)
 
-	list := List[K, V]{head: head}
+	list := List[K, V]{Head: head}
 	return list
 }
 
 // does not remove node, else same as remove
 func (l List[K, V]) Find(key K) (V, bool) {
-	curr := l.head // no load??
-	for curr.key < key {
-		curr = curr.next.Load()
+	curr := l.Head // no load??
+	for curr.Key < key {
+		curr = curr.Next.Load()
 	}
-	return curr.item, curr.key == key && !curr.marked.Load()
+	return curr.item, curr.Key == key && !curr.marked.Load()
 }
 
 // returns true if inserted, else false (already there)
@@ -49,12 +49,12 @@ func (l List[K, V]) Insert(key K, val V) bool {
 	// infinite loop
 	for {
 		// traverse without locking
-		pred := l.head
-		curr := pred.next.Load()
+		pred := l.Head
+		curr := pred.Next.Load()
 
-		for curr.key < key {
+		for curr.Key < key {
 			pred = curr
-			curr = curr.next.Load()
+			curr = curr.Next.Load()
 		}
 
 		// lock when found
@@ -69,10 +69,10 @@ func (l List[K, V]) Insert(key K, val V) bool {
 			return false
 		} else {
 			newNode := new(node[K, V])
-			newNode.key = key
+			newNode.Key = key
 			newNode.item = val
-			newNode.next.Store(curr)
-			pred.next.Store(newNode)
+			newNode.Next.Store(curr)
+			pred.Next.Store(newNode)
 			curr.Unlock()
 			pred.Unlock()
 			return true
@@ -83,22 +83,22 @@ func (l List[K, V]) Insert(key K, val V) bool {
 // returns val, ok (false if no node with key)
 func (l List[K, V]) Remove(key K) (V, bool) {
 	for {
-		pred := l.head
-		curr := pred.next.Load()
+		pred := l.Head
+		curr := pred.Next.Load()
 
-		for curr.key < key {
+		for curr.Key < key {
 			pred = curr
-			curr = curr.next.Load()
+			curr = curr.Next.Load()
 		}
 
 		pred.Lock()
 		curr.Lock()
 
 		if l.Validate(pred, curr) { // failed
-			if curr.key == key {
+			if curr.Key == key {
 				curr.marked.Store(true)
-				next := curr.next.Load()
-				pred.next.Store(next)
+				Next := curr.Next.Load()
+				pred.Next.Store(Next)
 				return curr.item, true
 			}
 
@@ -107,12 +107,12 @@ func (l List[K, V]) Remove(key K) (V, bool) {
 		} else {
 			curr.Unlock()
 			pred.Unlock()
-			return l.head.item, false
+			return l.Head.item, false
 		}
 	}
 }
 
 // pred comes before curr and curr matches
 func (l List[K, V]) Validate(pred, curr *node[K, V]) bool {
-	return !pred.marked.Load() && !curr.marked.Load() && pred.next.Load() == curr
+	return !pred.marked.Load() && !curr.marked.Load() && pred.Next.Load() == curr
 }

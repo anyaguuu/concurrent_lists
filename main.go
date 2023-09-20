@@ -22,6 +22,34 @@ func wgRemove[K cmp.Ordered, V any](wg *sync.WaitGroup, lst structs.List[K, V], 
 }
 
 func main() {
+	var wg sync.WaitGroup
+	fmt.Println("Starting")
+	wg.Add(5)
+
+	lst := structs.New[int, int](0, 10)
+
+	go wgInsert(&wg, lst, 1, 1)
+	go wgInsert(&wg, lst, 2, 2)
+	go wgInsert(&wg, lst, 3, 3)
+	go wgInsert(&wg, lst, 4, 4)
+	go wgInsert(&wg, lst, 5, 5)
+
+	wg.Wait()
+
+	print(lst, 10)
+
+}
+
+func print[K cmp.Ordered, V any](lst structs.List[K, V], tailKey K) {
+	curr := lst.Head
+
+	for curr.Key <= tailKey {
+		fmt.Println(curr.Key, ", ")
+		curr = curr.Next.Load()
+	}
+}
+
+func test1() {
 	lst := structs.New[int, int](0, 10)
 	lst.Insert(1, 1)
 	lst.Insert(2, 2)
