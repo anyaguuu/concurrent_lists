@@ -66,23 +66,17 @@ func (l List[K, V]) Insert(key K, val V) bool {
 		if !l.Validate(pred, curr) {
 			curr.Unlock()
 			pred.Unlock()
-			continue
-		}
-
-		result := false
-
-		if key != curr.key {
+			return false
+		} else {
 			newNode := new(node[K, V])
 			newNode.key = key
 			newNode.item = val
 			newNode.next.Store(curr)
 			pred.next.Store(newNode)
-			result = true
+			curr.Unlock()
+			pred.Unlock()
+			return true
 		}
-
-		curr.Unlock()
-		pred.Unlock()
-		return result
 	}
 }
 
