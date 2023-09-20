@@ -41,5 +41,15 @@ func (l List[K, V]) Find(key K) (V, bool) {
 	for curr.key < key {
 		curr = curr.next.Load()
 	}
-	return curr.item, curr.key == key
+	return curr.item, curr.key == key && !curr.marked.Load()
+}
+
+// returns true if inserted, else false (already there)
+func (l List[K, V]) Insert(key K, val V) bool {
+
+}
+
+// pred comes before curr and curr matches
+func (l List[K, V]) Validate(pred, curr *node[K, V]) bool {
+	return !pred.marked.Load() && !curr.marked.Load() && pred.next.Load() == curr
 }
