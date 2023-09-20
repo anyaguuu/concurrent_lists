@@ -1,4 +1,4 @@
-package node
+package structs
 
 import (
 	"cmp"
@@ -6,10 +6,10 @@ import (
 	"sync/atomic"
 )
 
-type node[K cmp.Ordered, V any] struct {
+type Node[K cmp.Ordered, V any] struct {
 	sync.Mutex
 	key    K
 	item   V
 	marked atomic.Bool
-	next   atomic.Pointer[node[K, V]]
+	next   atomic.Pointer[Node[K, V]]
 }
