@@ -86,6 +86,40 @@ func (l List[K, V]) Insert(key K, val V) bool {
 	}
 }
 
+// returns val, ok (false if no node with key)
+func (l List[K, V]) Remove(key K) (V, bool) {
+	for {
+		pred := l.head
+		curr := pred.next.Load()
+
+		for curr.key < key {
+			pred = curr
+			curr = curr.next.Load()
+		}
+
+		pred.Lock()
+		curr.Lock()
+
+		if !l.Validate(pred, curr) { // failed
+			curr.Unlock()
+			pred.Unlock()
+			continue
+		}
+
+		result := false
+		if curr.key == key {
+			curr.marked.Store(true)
+			next := curr.next.Load()
+			pred.next.Store(next)
+		}
+
+		curr.Unlock()
+		pred.Unlock()
+
+		return curr.item, result
+	}
+}
+
 // pred comes before curr and curr matches
 func (l List[K, V]) Validate(pred, curr *node[K, V]) bool {
 	return !pred.marked.Load() && !curr.marked.Load() && pred.next.Load() == curr
