@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 )
 
-type node[K cmp.Ordered, V any] struct {
+type node[K cmp.Ordered, V any] struct { // comment
 	sync.Mutex
 	Key    K
 	item   V
